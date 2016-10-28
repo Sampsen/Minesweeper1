@@ -54,9 +54,9 @@ def gamearea(rows, bombs):
                 playarea[rowindex-1] = [" "] * (2 + rows)       
         playarea[0][0] = "  "
     print("")
-    randombombs(rows, bombs, playarea)
-    
-def randombombs(rows, bombs, playarea):
+    guess(rows, bombs, playarea)
+ 
+def randombombs(rows, bombs, playarea, columnguess, rowguess, firstturn):
     playareacopy = copy.deepcopy(playarea)
     bombchance = bombs / (rows ** 2)
     while bombs > 0:
@@ -66,8 +66,10 @@ def randombombs(rows, bombs, playarea):
             while columnindex < len(playareacopy) - 1:                 
                 bombchance2 = random()
                 if bombs < 1:
-                        break
-                if bombchance >= bombchance2 and playareacopy[rowindex][columnindex] != "b":
+                    break
+                if rowindex == rowguess and columnindex == columnguess:
+                    columnindex += 1
+                if bombchance >= bombchance2 and playareacopy[rowindex][columnindex] != "b":                  
                     playareacopy[rowindex][columnindex] = "b"
                     bombs -= 1
                 columnindex += 1
@@ -87,45 +89,21 @@ def randombombs(rows, bombs, playarea):
                     playareacopy[rowindex][columnindex] = str(bnumber)
                     bnumber = 0
                 columnindex += 1
-            rowindex += 1   
+            rowindex += 1
+        for row in playarea:
+            print(" ".join(row))
         return playareacopy
         
-    makeaguess(rows, playarea, setplayarea(playareacopy))
+    letsplay(rows, playarea, setplayarea(playareacopy), rowguess, columnguess, firstturn)
         
 #def changemode(rows, playarea, playareacopy):
 #    pass
 
-def bombflag(rows, playarea, playareacopy):
-    winning(playarea, playareacopy)
-    for row in playarea:
-        print(" ".join(row))
-    print(" ")
-    print("Flag a bomb.")
-    columnguess = input("Guess a column:  ").lower()
-    if columnguess == "guess":
-        makeaguess(rows, playarea, playareacopy)
-    if columnguess == 'exit':
-        sys.exit()
-    alphabetindex = 0    
-    for letter in alphabet:
-        if columnguess == letter:
-            columnguess = alphabetindex
-        alphabetindex += 1
-    rowguess = int(input("Guess a row:  "))
-    if 1 > columnguess or columnguess > rows or 1 > rowguess or rowguess > rows:
-        print("That's outside the gamearea, choose again.")
-        bombflag(rows, playarea, playareacopy)
-    else:
-        playarea[rowguess][columnguess] = "b"
-        bombflag(rows, playarea, playareacopy)
-#        letsplay(rows, playarea, playareacopy, rowguess, columnguess)
-    
-def makeaguess(rows, playarea, playareacopy):
+def guess(rows, bombs, playarea, playareacopy = [], firstturn = True):
     winning(playarea, playareacopy)
     for row in playarea:
         print(" ".join(row))    
-    print(" ")
-    print("Find tiles with no bombs")    
+    print("Find tiles with no bombs.")    
     columnguess = input("Guess a column:  ").lower()
     if columnguess == "bomb":
         bombflag(rows, playarea, playareacopy)
@@ -136,15 +114,72 @@ def makeaguess(rows, playarea, playareacopy):
         if columnguess == letter:
             columnguess = alphabetindex
         alphabetindex += 1
+    try:    
+        rowguess = int(input("Guess a row:  "))
+    except ValueError:
+        print("")
+        print("Please enter A to " + str(alphabet[rows].upper()) + " for column.")
+        print("Please enter a whole number, 1 to " + str(rows ) + " for rows.")
+        print("")
+        return guess(rows, bombs, playarea, playareacopy, firstturn)
+    if 1 > columnguess or columnguess > rows or 1 > rowguess or rowguess > rows:
+        print("That's outside the gamearea, choose again.")
+        print(" ")
+        return guess(rows, bombs, playarea, playareacopy, firstturn)
+    if firstturn == True:
+        firstturn = False
+        randombombs(rows, bombs, playarea, columnguess, rowguess, firstturn)
+    else:
+        letsplay(rows, playarea, playareacopy, rowguess, columnguess, firstturn)
+
+def bombflag(rows, playarea, playareacopy):
+    winning(playarea, playareacopy)
+    bombs = 0
+    print(" ")
+    for row in playarea:
+        print(" ".join(row))
+    print("Flag a bomb.")
+    columnguess = input("Guess a column:  ").lower()
+    if columnguess == "guess":
+        guess(rows, bombs, playarea, playareacopy)
+    if columnguess == 'exit':
+        sys.exit()
+    alphabetindex = 0    
+    for letter in alphabet:
+        if columnguess == letter:
+            columnguess = alphabetindex
+        alphabetindex += 1
     rowguess = int(input("Guess a row:  "))
     if 1 > columnguess or columnguess > rows or 1 > rowguess or rowguess > rows:
         print("That's outside the gamearea, choose again.")
-        makeaguess(rows, playarea, playareacopy)
+        return bombflag(rows, playarea, playareacopy)
     else:
-        letsplay(rows, playarea, playareacopy, rowguess, columnguess)
+        playarea[rowguess][columnguess] = "b"
+        bombflag(rows, playarea, playareacopy)
+    
+#def makeaguess(rows, playarea, playareacopy):
+#    winning(playarea, playareacopy)
+#    for row in playarea:
+#        print(" ".join(row))    
+#    print("Find tiles with no bombs")    
+#    columnguess = input("Guess a column:  ").lower()
+#    
+#    alphabetindex = 0    
+#    for letter in alphabet:
+#        if columnguess == letter:
+#            columnguess = alphabetindex
+#        alphabetindex += 1
+#    rowguess = int(input("Guess a row:  "))
+#    if 1 > columnguess or columnguess > rows or 1 > rowguess or rowguess > rows:
+#        print("That's outside the gamearea, choose again.")
+#        print(" ")
+#        makeaguess(rows, playarea, playareacopy)
+#    else:
+#        letsplay(rows, playarea, playareacopy, rowguess, columnguess)
                     
-def letsplay(rows, playarea, playareacopy, rowguess, columnguess):    
+def letsplay(rows, playarea, playareacopy, rowguess, columnguess, firstturn):    
     print("")
+    bombs = 0
     if playareacopy[rowguess][columnguess] == "b":
         again = input("You hit a bomb, game over.  Want to play again?  Y/N:  ").lower()
         if again == "y" or again == "yes":
@@ -156,10 +191,10 @@ def letsplay(rows, playarea, playareacopy, rowguess, columnguess):
         revealon0(rowguess, columnguess, playarea, playareacopy)
         for number in range((len(playarea) - 2)):
             cascadeon0(rowguess, columnguess, playarea, playareacopy)
-        makeaguess(rows, playarea, playareacopy)
+        guess(rows, bombs, playarea, playareacopy, firstturn)
     else:
         playarea[rowguess][columnguess] = playareacopy[rowguess][columnguess]
-        makeaguess(rows, playarea, playareacopy)
+        guess(rows, bombs, playarea, playareacopy, firstturn)
             
 def revealon0(rowguess, columnguess, playarea, playareacopy):
     #reveals all tiles around the guessed tile when there are no bombs touching it
